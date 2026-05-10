@@ -3,6 +3,7 @@
 #include <optional>
 using namespace std;
 
+// 1. Zaimplementuj klasę wektor wraz ze wszystkimi działaniami. 
 class Vector3
 {
 private:
@@ -12,7 +13,6 @@ private:
 
 public:
 
-    // Default constructor
     Vector3()
     {
         x = 0;
@@ -20,7 +20,6 @@ public:
         z = 0;
     }
 
-    // Constructor with parameters
     Vector3(double x, double y, double z)
     {
         this->x = x;
@@ -28,7 +27,6 @@ public:
         this->z = z;
     }
 
-    // Getters
     double getX() const
     {
         return x;
@@ -44,7 +42,6 @@ public:
         return z;
     }
 
-    // Setters
     void setX(double x)
     {
         this->x = x;
@@ -60,7 +57,6 @@ public:
         this->z = z;
     }
 
-    // Vector addition
     Vector3 operator+(const Vector3& other) const
     {
         return Vector3(
@@ -70,7 +66,6 @@ public:
         );
     }
 
-    // Vector subtraction
     Vector3 operator-(const Vector3& other) const
     {
         return Vector3(
@@ -80,7 +75,6 @@ public:
         );
     }
 
-    // Multiplication by scalar
     Vector3 operator*(double scalar) const
     {
         return Vector3(
@@ -90,7 +84,6 @@ public:
         );
     }
 
-    // Division by scalar
     Vector3 operator/(double scalar) const
     {
         return Vector3(
@@ -100,7 +93,6 @@ public:
         );
     }
 
-    // Dot product
     double operator*(const Vector3& other) const
     {
         return x * other.x +
@@ -108,7 +100,6 @@ public:
                z * other.z;
     }
 
-    // Equality comparison
     bool operator==(const Vector3& other) const
     {
         return x == other.x &&
@@ -116,7 +107,6 @@ public:
                z == other.z;
     }
 
-    // Vector length
     double length() const
     {
         return sqrt(
@@ -126,7 +116,6 @@ public:
         );
     }
 
-    // Angle between vectors
     double angle(const Vector3& other) const
     {
         double dot = (*this) * other;
@@ -147,13 +136,14 @@ public:
             x * other.y - y * other.x
         );
     }
+
     Vector3 normalize() const
     {
         double len = length();
         if (len == 0) return Vector3(0, 0, 0);
         return (*this) / len;
     }
-    // Display vector
+
     friend ostream& operator<<(ostream& os, const Vector3& v)
     {
         os << "["
@@ -164,6 +154,7 @@ public:
         return os;
     }
 };
+
 class Ray
 {
 public:
@@ -207,8 +198,8 @@ public:
 class Plane
 {
 public:
-    Vector3 point;      // Punkt na płaszczyźnie
-    Vector3 normal;     // Wektor normalny
+    Vector3 point;
+    Vector3 normal;
 
     Plane(const Vector3& point, const Vector3& normal)
         : point(point), normal(normal.normalize()) {}
@@ -301,10 +292,8 @@ int main()
     cout << "a + b = " << sum1 << endl;
     cout << "b + a = " << sum2 << endl;
 
-    /*prawdź czy prawidłowo działa
-przemienność dodawania za pomocą odpowiedniego
-zdefiniowania przykładowych wektorów i ich sumy w
-funkcji main(). */
+    /* 2. Sprawdź czy prawidłowo działa przemienność dodawania za pomocą 
+    odpowiedniego zdefiniowania przykładowych wektorów i ich sumy w funkcji main(). */
     if (sum1 == sum2)
     {
         cout << "Vector addition is commutative." << endl;
@@ -313,27 +302,26 @@ funkcji main(). */
     {
         cout << "Vector addition is NOT commutative." << endl;
     }
-    //3. Znajdź kąt pomiędzy wektorem [0,3,0] a [5,5,0] 
-    // Angle between vectors
+    // 3. Znajdź kąt pomiędzy wektorem [0,3,0] a [5,5,0] 
     Vector3 v1(0, 3, 0);
     Vector3 v2(5, 5, 0);
 
     cout << "Angle between vectors: "
          << v1.angle(v2)
          << " degrees" << endl;
-    //4
+    // 4. Znajdź wektor prostopadły do wektorów [4,5,1] i [4,1,3]
     Vector3 u(4, 5, 1);
     Vector3 v(4, 1, 3);
     Vector3 perp = u.cross(v);
     cout << "Wektor prostopadly do [4,5,1] i [4,1,3]: " << perp << endl;
-    //5
+    // 5. Znormalizuj powstały wektor
     Vector3 perp_normalized = perp / perp.length();
     cout << "Znormalizowany wektor prostopadly: " << perp_normalized << endl;
 
-//6 Należy zaimplementować klasę wektor, promień, sfera i płaszczyzna
-// 7 2. Zdefiniować sferę S o środku w punkcie (0,0,0) i promieniu 10
-//8 . 3. Zdefiniować promień R1 o początku w punkcie (0,0,-20) i skierowany w środek kuli. 
-//9Zdefiniować promień R2 o początku w tym samym punkcie, co R1, skierowany równolegle do osi Y. 
+    // 6. Należy zaimplementować klasę wektor, promień, sfera i płaszczyzna
+    // 7. Zdefiniować sferę S o środku w punkcie (0,0,0) i promieniu 10
+    // 8. Zdefiniować promień R1 o początku w punkcie (0,0,-20) i skierowany w środek kuli. 
+    // 9. Zdefiniować promień R2 o początku w tym samym punkcie, co R1, skierowany równolegle do osi Y. 
 
     Vector3 sphereCenter(0,0,0);
     Vector3 rayOrigin(0,0,-20);
@@ -342,8 +330,8 @@ funkcji main(). */
     Ray R2(rayOrigin, Vector3(0,1,0));
     Plane plane(Vector3(0,0,0), Vector3(0,1,0));
 
-// 10 Proszę sprawdzić, czy istnieje przecięcie sfery S z promieniami R1 oraz R2.
-// 11. Wynik w postaci współrzędnych punktu przecięcia należy wyświetlić. 
+    // 10. Proszę sprawdzić, czy istnieje przecięcie sfery S z promieniami R1 oraz R2.
+    // 11. Wynik w postaci współrzędnych punktu przecięcia należy wyświetlić. 
     auto hit1 = S.intersects(R1);
     if (hit1)
     {
@@ -364,9 +352,8 @@ funkcji main(). */
     {
         cout << "R2 no hit" << endl;
     }
-    /* 12 Proszę zdefiniować dowolny promień R3, tak aby
-przecinał on sferę S w dokładnie jednym punkcie. Podać
-współrzędne punktu przecięcia.*/
+    /* 12. Proszę zdefiniować dowolny promień R3, tak aby przecinał 
+    on sferę S w dokładnie jednym punkcie. Podać współrzędne punktu przecięcia.*/
     Ray R3(Vector3(10, 0, -10), Vector3(0, 0, 1));
     auto hit3 = S.intersects(R3);
     if (hit3)
