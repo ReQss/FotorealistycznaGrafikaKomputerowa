@@ -1,6 +1,6 @@
 #include <iostream>
 #include <cmath>
-
+#include <optional>
 using namespace std;
 
 class Vector3
@@ -182,7 +182,7 @@ public:
 
     Sphere(const Vector3& center, double radius)
         : center(center), radius(radius) {}
-    bool intersects(const Ray& ray) const
+    optional<Vector3> intersects(const Ray& ray) const
     {
         Vector3 oc = ray.origin - center;
 
@@ -192,7 +192,15 @@ public:
 
         double discriminant = b * b - 4 * a * c;
 
-        return discriminant >= 0;
+        if (discriminant < 0)
+            return nullopt;
+
+        double t = (-b - sqrt(discriminant)) / (2.0 * a);
+
+        if (t < 0)
+            return nullopt;
+
+        return ray.origin + ray.direction * t;
     }
 };
 
@@ -261,14 +269,39 @@ funkcji main(). */
     Plane plane(Vector3(0,0,0), Vector3(0,1,0));
 
 // 10 Proszę sprawdzić, czy istnieje przecięcie sfery S z promieniami R1 oraz R2.
-    if (S.intersects(R1))
-    cout << "R1 intersects sphere" << endl;
+// 11. Wynik w postaci współrzędnych punktu przecięcia należy wyświetlić. 
+    auto hit1 = S.intersects(R1);
+    if (hit1)
+    {
+        cout << "R1 hit: " << *hit1 << endl;
+    }
     else
-        cout << "R1 does NOT intersect sphere" << endl;
+    {
+        cout << "R1 no hit" << endl;
+    }
 
-    if (S.intersects(R2))
-        cout << "R2 intersects sphere" << endl;
+    auto hit2 = S.intersects(R2);
+
+    if (hit2)
+    {
+        cout << "R2 hit: " << *hit2 << endl;
+    }
     else
-        cout << "R2 does NOT intersect sphere" << endl;
+    {
+        cout << "R2 no hit" << endl;
+    }
+    /* 12 Proszę zdefiniować dowolny promień R3, tak aby
+przecinał on sferę S w dokładnie jednym punkcie. Podać
+współrzędne punktu przecięcia.*/
+    Ray R3(Vector3(10, 0, -10), Vector3(0, 0, 1));
+    auto hit3 = S.intersects(R3);
+    if (hit3)
+    {
+        cout << "R3 hit (punkt stycznosci): " << *hit3 << endl;
+    }
+    else
+    {
+        cout << "R3 no hit" << endl;
+    }
     return 0;
 }
