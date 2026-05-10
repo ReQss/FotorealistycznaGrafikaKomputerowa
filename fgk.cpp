@@ -212,7 +212,81 @@ public:
 
     Plane(const Vector3& point, const Vector3& normal)
         : point(point), normal(normal.normalize()) {}
+
+    optional<Vector3> intersects(const Ray& ray) const
+    {
+        double denom = normal * ray.direction; 
+
+        if (abs(denom) > 1e-6) 
+        {
+            Vector3 p0l0 = point - ray.origin; 
+            
+            double t = (p0l0 * normal) / denom; 
+            
+            if (t >= 0) 
+            {
+                return ray.origin + ray.direction * t;
+            }
+        }
+        return nullopt;
+    }
 };
+
+bool isLineIntersectingTriangle(const Vector3& p1, const Vector3& p2, 
+                                const Vector3& a, const Vector3& b, const Vector3& c) 
+{
+    Vector3 u = b - a;
+    Vector3 v = c - a;
+    Vector3 n = u.cross(v);
+
+    Vector3 dir = p2 - p1;
+    double dot = n * dir;
+
+    const double EPSILON = 1e-6;
+
+    if (abs(dot) < EPSILON) 
+    {
+        double dist = n * (p1 - a);
+        if (abs(dist) > EPSILON) 
+        {
+            return false;
+        }
+
+        Vector3 m = dir.cross(n);
+
+        double d1 = m * (a - p1);
+        double d2 = m * (b - p1);
+        double d3 = m * (c - p1);
+
+        bool hasPositive = (d1 > EPSILON) || (d2 > EPSILON) || (d3 > EPSILON);
+        bool hasNegative = (d1 < -EPSILON) || (d2 < -EPSILON) || (d3 < -EPSILON);
+
+        return hasPositive && hasNegative;
+    } 
+    else 
+    {
+        double t = (n * (a - p1)) / dot;
+        Vector3 p = p1 + dir * t;
+
+        Vector3 v0 = b - a;
+        Vector3 v1 = c - a;
+        Vector3 v2 = p - a;
+
+        double d00 = v0 * v0;
+        double d01 = v0 * v1;
+        double d11 = v1 * v1;
+        double d20 = v2 * v0;
+        double d21 = v2 * v1;
+
+        double denom = d00 * d11 - d01 * d01;
+        double v_coord = (d11 * d20 - d01 * d21) / denom;
+        double w_coord = (d00 * d21 - d01 * d20) / denom;
+        double u_coord = 1.0 - v_coord - w_coord;
+
+        return (u_coord > EPSILON) && (v_coord > EPSILON) && (w_coord > EPSILON);
+    }
+}
+
 int main()
 {
     Vector3 a(1, 2, 3);
@@ -303,5 +377,43 @@ współrzędne punktu przecięcia.*/
     {
         cout << "R3 no hit" << endl;
     }
+
+    /* 13. Proszę zdefiniować płaszczyznę P przechodzącą przez punkt (0,0,0), 
+    której wektor normalny tworzy kąt 45 stopni z osiami Y i Z. */
+    Plane P(Vector3(0, 0, 0), Vector3(0, 1, 1));
+
+    // 14. Proszę znaleźć punkt przecięcia płaszczyzny P z promieniem R2.
+    auto hit4 = P.intersects(R2);
+    if (hit4)
+    {
+        cout << "R2 hit Plane P: " << *hit4 << endl;
+    }
+    else
+    {
+        cout << "R2 no hit Plane P" << endl;
+    }
+
+    /* 15. Mamy trójkąt zdefiniowany przez punkty A(0, 0, 0), B(1,0, 0) i C(0, 1, 0). 
+    Napisz kod, który sprawdzi, czy linia definiowana przez punkty P1 i P2 przecina ten trójkąt.
+    Przetestuj kod dla poniższych przypadków: */
+    Vector3 A(0, 0, 0);
+    Vector3 B(1, 0, 0);
+    Vector3 C(0, 1, 0);
+
+    // Przypadek 1: Linia przechodząca przez trójkąt. 
+    Vector3 p1_1(-1, 0.5, 0);
+    Vector3 p2_1(1, 0.5, 0);
+    cout << "Przypadek 1: " << (isLineIntersectingTriangle(p1_1, p2_1, A, B, C) ? "True" : "False") << endl;
+
+    // Przypadek 2: Linia leżąca na płaszczyźnie trójkąta, ale poza nim. 
+    Vector3 p1_2(2, -1, 0);
+    Vector3 p2_2(2, 2, 0);
+    cout << "Przypadek 2: " << (isLineIntersectingTriangle(p1_2, p2_2, A, B, C) ? "True" : "False") << endl;
+
+    // Przypadek 3: Linia nieprzecinająca trójkąta. 
+    Vector3 p1_3(0, 0, -1);
+    Vector3 p2_3(0, 0, 1);
+    cout << "Przypadek 3: " << (isLineIntersectingTriangle(p1_3, p2_3, A, B, C) ? "True" : "False") << endl;
+
     return 0;
 }
