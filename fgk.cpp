@@ -139,6 +139,20 @@ public:
         return acos(cosValue) * 180.0 / M_PI;
     }
 
+    Vector3 cross(const Vector3& other) const
+    {
+        return Vector3(
+            y * other.z - z * other.y,
+            z * other.x - x * other.z,
+            x * other.y - y * other.x
+        );
+    }
+    Vector3 normalize() const
+    {
+        double len = length();
+        if (len == 0) return Vector3(0, 0, 0);
+        return (*this) / len;
+    }
     // Display vector
     friend ostream& operator<<(ostream& os, const Vector3& v)
     {
@@ -183,5 +197,12 @@ int main()
          << v1.angle(v2)
          << " degrees" << endl;
 
+    Vector3 u(4, 5, 1);
+    Vector3 v(4, 1, 3);
+    Vector3 perp = u.cross(v);
+    cout << "Wektor prostopadly do [4,5,1] i [4,1,3]: " << perp << endl;
+
+    Vector3 perp_normalized = perp / perp.length();
+    cout << "Znormalizowany wektor prostopadly: " << perp_normalized << endl;
     return 0;
 }
