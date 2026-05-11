@@ -223,8 +223,7 @@ public:
     }
 };
 
-bool isLineIntersectingTriangle(const Vector3& p1, const Vector3& p2, 
-                                const Vector3& a, const Vector3& b, const Vector3& c) 
+bool isLineIntersectingTriangle(const Vector3& p1, const Vector3& p2, const Vector3& a, const Vector3& b, const Vector3& c) 
 {
     Vector3 u = b - a;
     Vector3 v = c - a;
@@ -296,26 +295,26 @@ int main()
     odpowiedniego zdefiniowania przykładowych wektorów i ich sumy w funkcji main(). */
     if (sum1 == sum2)
     {
-        cout << "Vector addition is commutative." << endl;
+        cout << "Dodawanie wektorów jest przemienne." << endl;
     }
     else
     {
-        cout << "Vector addition is NOT commutative." << endl;
+        cout << "Dodawanie wektorów NIE jest przemienne." << endl;
     }
+
     // 3. Znajdź kąt pomiędzy wektorem [0,3,0] a [5,5,0] 
     Vector3 v1(0, 3, 0);
     Vector3 v2(5, 5, 0);
+    cout << "Kąt między wektorami: " << v1.angle(v2) << " stopni" << endl;
 
-    cout << "Angle between vectors: "
-         << v1.angle(v2)
-         << " degrees" << endl;
     // 4. Znajdź wektor prostopadły do wektorów [4,5,1] i [4,1,3]
     Vector3 u(4, 5, 1);
     Vector3 v(4, 1, 3);
     Vector3 perp = u.cross(v);
     cout << "Wektor prostopadly do [4,5,1] i [4,1,3]: " << perp << endl;
+    
     // 5. Znormalizuj powstały wektor
-    Vector3 perp_normalized = perp / perp.length();
+    Vector3 perp_normalized = perp.normalize();
     cout << "Znormalizowany wektor prostopadly: " << perp_normalized << endl;
 
     // 6. Należy zaimplementować klasę wektor, promień, sfera i płaszczyzna
@@ -328,29 +327,28 @@ int main()
     Sphere S(sphereCenter, 10.0);
     Ray R1(rayOrigin, (sphereCenter - rayOrigin).normalize());
     Ray R2(rayOrigin, Vector3(0,1,0));
-    Plane plane(Vector3(0,0,0), Vector3(0,1,0));
 
     // 10. Proszę sprawdzić, czy istnieje przecięcie sfery S z promieniami R1 oraz R2.
     // 11. Wynik w postaci współrzędnych punktu przecięcia należy wyświetlić. 
     auto hit1 = S.intersects(R1);
     if (hit1)
     {
-        cout << "R1 hit: " << *hit1 << endl;
+        cout << "R1 trafił w sfere S: " << *hit1 << endl;
     }
     else
     {
-        cout << "R1 no hit" << endl;
+        cout << "R1 NIE trafił w sfere S" << endl;
     }
 
     auto hit2 = S.intersects(R2);
 
     if (hit2)
     {
-        cout << "R2 hit: " << *hit2 << endl;
+        cout << "R2 trafił w sfere S: " << *hit2 << endl;
     }
     else
     {
-        cout << "R2 no hit" << endl;
+        cout << "R2 NIE trafił w sfere S" << endl;
     }
     /* 12. Proszę zdefiniować dowolny promień R3, tak aby przecinał 
     on sferę S w dokładnie jednym punkcie. Podać współrzędne punktu przecięcia.*/
@@ -358,11 +356,11 @@ int main()
     auto hit3 = S.intersects(R3);
     if (hit3)
     {
-        cout << "R3 hit (punkt stycznosci): " << *hit3 << endl;
+        cout << "R3 trafił w sfere S: " << *hit3 << endl;
     }
     else
     {
-        cout << "R3 no hit" << endl;
+        cout << "R3 NIE trafił w sfere S" << endl;
     }
 
     /* 13. Proszę zdefiniować płaszczyznę P przechodzącą przez punkt (0,0,0), 
@@ -373,11 +371,11 @@ int main()
     auto hit4 = P.intersects(R2);
     if (hit4)
     {
-        cout << "R2 hit Plane P: " << *hit4 << endl;
+        cout << "R2 trafił w płaszczyznę P: " << *hit4 << endl;
     }
     else
     {
-        cout << "R2 no hit Plane P" << endl;
+        cout << "R2 NIE trafił w płaszczyznę P" << endl;
     }
 
     /* 15. Mamy trójkąt zdefiniowany przez punkty A(0, 0, 0), B(1,0, 0) i C(0, 1, 0). 
