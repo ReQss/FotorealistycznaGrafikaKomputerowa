@@ -225,56 +225,38 @@ public:
 
 bool isLineIntersectingTriangle(const Vector3& p1, const Vector3& p2, const Vector3& a, const Vector3& b, const Vector3& c) 
 {
-    Vector3 u = b - a;
-    Vector3 v = c - a;
-    Vector3 n = u.cross(v);
-
-    Vector3 dir = p2 - p1;
-    double dot = n * dir;
-
     const double EPSILON = 1e-6;
+    
+    Vector3 edge1 = b - a;
+    Vector3 edge2 = c - a;
+    
+    Vector3 dir = p2 - p1;
+    
+    Vector3 h = dir.cross(edge2);
+    double a_val = edge1 * h;
 
-    if (abs(dot) < EPSILON) 
-    {
-        double dist = n * (p1 - a);
-        if (abs(dist) > EPSILON) 
-        {
-            return false;
-        }
+    if (a_val > -EPSILON && a_val < EPSILON)
+        return false;
 
-        Vector3 m = dir.cross(n);
+    double f = 1.0 / a_val;
+    Vector3 s = p1 - a;
+    double u = f * (s * h);
 
-        double d1 = m * (a - p1);
-        double d2 = m * (b - p1);
-        double d3 = m * (c - p1);
+    if (u < 0.0 || u > 1.0)
+        return false;
 
-        bool hasPositive = (d1 > EPSILON) || (d2 > EPSILON) || (d3 > EPSILON);
-        bool hasNegative = (d1 < -EPSILON) || (d2 < -EPSILON) || (d3 < -EPSILON);
+    Vector3 q = s.cross(edge1);
+    double v = f * (dir * q);
 
-        return hasPositive && hasNegative;
-    } 
-    else 
-    {
-        double t = (n * (a - p1)) / dot;
-        Vector3 p = p1 + dir * t;
+    if (v < 0.0 || u + v > 1.0)
+        return false;
 
-        Vector3 v0 = b - a;
-        Vector3 v1 = c - a;
-        Vector3 v2 = p - a;
+    double t = f * (edge2 * q);
 
-        double d00 = v0 * v0;
-        double d01 = v0 * v1;
-        double d11 = v1 * v1;
-        double d20 = v2 * v0;
-        double d21 = v2 * v1;
+    if (t > EPSILON && t <= 1.0 + EPSILON) 
+        return true;
 
-        double denom = d00 * d11 - d01 * d01;
-        double v_coord = (d11 * d20 - d01 * d21) / denom;
-        double w_coord = (d00 * d21 - d01 * d20) / denom;
-        double u_coord = 1.0 - v_coord - w_coord;
-
-        return (u_coord > EPSILON) && (v_coord > EPSILON) && (w_coord > EPSILON);
-    }
+    return false;
 }
 
 int main()
