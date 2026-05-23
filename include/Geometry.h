@@ -1,5 +1,5 @@
 #pragma once
-#include "Vector3.h"
+#include "../include/Vector3.h"
 #include <optional>
 
 class Ray
