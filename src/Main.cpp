@@ -1,11 +1,15 @@
 #include <iostream>
 #include "../include/Vector3.h"
 #include "../include/Geometry.h"
+#include "../include/Image.h"
 
 using namespace std;
 
 int main()
 {
+    // -------------------------------
+    // LAB 1
+    // -------------------------------
     Vector3 a(1, 2, 3);
     Vector3 b(4, 5, 6);
 
@@ -127,5 +131,25 @@ int main()
     Vector3 p2_3(0, 0, 1);
     cout << "Przypadek 3: " << (isLineIntersectingTriangle(p1_3, p2_3, A, B, C) ? "True" : "False") << endl;
 
+    // -------------------------------
+    // LAB 2
+    // -------------------------------
+
+    int width = 256;
+    int height = 256;
+    Image img(width, height);
+
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            // Generujemy kolory w zależności od współrzędnych
+            double r = double(x) / (width - 1);
+            double g = double(height - 1 - y) / (height - 1);
+            double b = 0.25;
+
+            img.setPixel(x, y, Color(r, g, b));
+        }
+    }
+
+    img.savePPM("test_render.ppm");
     return 0;
 }
