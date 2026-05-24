@@ -10,58 +10,55 @@ double colorDifference(const Color& c1, const Color& c2) {
     return std::max({std::abs(c1.r - c2.r), std::abs(c1.g - c2.g), std::abs(c1.b - c2.b)});
 }
 
-Color trace(const Ray& ray, const Sphere& sphere, const Plane& plane) {
-    auto hitSphere = sphere.intersects(ray);
+Color trace(const Ray& ray, const Sphere& sphere1, const Sphere& sphere2, const Plane& plane) {
+    auto hit1 = sphere1.intersects(ray);
+    auto hit2 = sphere2.intersects(ray);
     auto hitPlane = plane.intersects(ray);
 
     double minDistance = 1e9; 
     
-    Color finalColor(0.2, 0.2, 0.3); 
+    Color finalColor(0.1, 0.1, 0.15); 
 
     Vector3 lightDir = Vector3(1, 1, -1).normalize();
 
-    if (hitSphere) {
-        double dist = (*hitSphere - ray.origin).length();
-        
+    if (hit1) {
+        double dist = (*hit1 - ray.origin).length();
         if (dist < minDistance) {
             minDistance = dist;
-            
-            Vector3 normal = (*hitSphere - sphere.center).normalize();
-            
+            Vector3 normal = (*hit1 - sphere1.center).normalize();
             double intensity = std::max(0.0, normal * lightDir);
-            
-            Color sphereColor(0.8, 0.2, 0.2); 
-            
-            finalColor = sphereColor * intensity;
+            finalColor = Color(0.8, 0.2, 0.2) * intensity;
+        }
+    }
+
+    if (hit2) {
+        double dist = (*hit2 - ray.origin).length();
+        if (dist < minDistance) {
+            minDistance = dist;
+            Vector3 normal = (*hit2 - sphere2.center).normalize();
+            double intensity = std::max(0.0, normal * lightDir);
+            finalColor = Color(0.2, 0.8, 0.2) * intensity;
         }
     }
 
     if (hitPlane) {
         double dist = (*hitPlane - ray.origin).length();
-        
         if (dist < minDistance) {
             minDistance = dist;
-            
             Vector3 normal = plane.normal;
-            
             double intensity = std::max(0.0, normal * lightDir);
-            
-            Color planeColor(0.5, 0.5, 0.5); 
-            
-            finalColor = planeColor * intensity;
+            finalColor = Color(0.5, 0.5, 0.5) * intensity;
         }
     }
 
     return finalColor;
 }
 
-Color adaptiveSample(double x, double y, double size, int depth, int maxDepth, const Camera& camera, int width, int height, const Sphere& sphere, const Plane& plane) {
+Color adaptiveSample(double x, double y, double size, int depth, int maxDepth, const Camera& camera, int width, int height, const Sphere& s1, const Sphere& s2, const Plane& p) {
     Ray centerRay = camera.generateRay(x, y, width, height);
-    Color centerColor = trace(centerRay, sphere, plane);
+    Color centerColor = trace(centerRay, s1, s2, p);
 
-    if (depth >= maxDepth) {
-        return centerColor;
-    }
+    if (depth >= maxDepth) return centerColor;
 
     double quarterSize = size / 4.0;
     Ray r1 = camera.generateRay(x - quarterSize, y - quarterSize, width, height);
@@ -69,13 +66,12 @@ Color adaptiveSample(double x, double y, double size, int depth, int maxDepth, c
     Ray r3 = camera.generateRay(x - quarterSize, y + quarterSize, width, height);
     Ray r4 = camera.generateRay(x + quarterSize, y + quarterSize, width, height);
 
-    Color c1 = trace(r1, sphere, plane);
-    Color c2 = trace(r2, sphere, plane);
-    Color c3 = trace(r3, sphere, plane);
-    Color c4 = trace(r4, sphere, plane);
+    Color c1 = trace(r1, s1, s2, p);
+    Color c2 = trace(r2, s1, s2, p);
+    Color c3 = trace(r3, s1, s2, p);
+    Color c4 = trace(r4, s1, s2, p);
 
     double threshold = 0.1;
-    
     bool needsSubdivision = 
         colorDifference(centerColor, c1) > threshold ||
         colorDifference(centerColor, c2) > threshold ||
@@ -84,13 +80,32 @@ Color adaptiveSample(double x, double y, double size, int depth, int maxDepth, c
 
     if (needsSubdivision) {
         double halfSize = size / 2.0;
-        c1 = adaptiveSample(x - quarterSize, y - quarterSize, halfSize, depth + 1, maxDepth, camera, width, height, sphere, plane);
-        c2 = adaptiveSample(x + quarterSize, y - quarterSize, halfSize, depth + 1, maxDepth, camera, width, height, sphere, plane);
-        c3 = adaptiveSample(x - quarterSize, y + quarterSize, halfSize, depth + 1, maxDepth, camera, width, height, sphere, plane);
-        c4 = adaptiveSample(x + quarterSize, y + quarterSize, halfSize, depth + 1, maxDepth, camera, width, height, sphere, plane);
+        c1 = adaptiveSample(x - quarterSize, y - quarterSize, halfSize, depth + 1, maxDepth, camera, width, height, s1, s2, p);
+        c2 = adaptiveSample(x + quarterSize, y - quarterSize, halfSize, depth + 1, maxDepth, camera, width, height, s1, s2, p);
+        c3 = adaptiveSample(x - quarterSize, y + quarterSize, halfSize, depth + 1, maxDepth, camera, width, height, s1, s2, p);
+        c4 = adaptiveSample(x + quarterSize, y + quarterSize, halfSize, depth + 1, maxDepth, camera, width, height, s1, s2, p);
     }
 
     return (c1 + c2 + c3 + c4) * 0.25;
+}
+
+void renderScene(const Camera& camera, int width, int height, const std::string& filename, int maxDepth, const Sphere& s1, const Sphere& s2, const Plane& p) {
+    Image img(width, height);
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            Color pixelColor;
+            
+            if (maxDepth == 0) {
+                Ray ray = camera.generateRay(x + 0.5, y + 0.5, width, height);
+                pixelColor = trace(ray, s1, s2, p);
+            } else {
+                pixelColor = adaptiveSample(x + 0.5, y + 0.5, 1.0, 0, maxDepth, camera, width, height, s1, s2, p);
+            }
+            
+            img.setPixel(x, y, pixelColor);
+        }
+    }
+    img.savePPM(filename);
 }
 
 int main()
@@ -225,34 +240,25 @@ int main()
 
     int width = 800;
     int height = 600;
-    Image img(width, height);
 
-    Sphere sphere(Vector3(0, 0, -5), 1.5);
-    Plane plane(Vector3(0, -1.5, 0), Vector3(0, 1, 0));
+    Sphere sphere1(Vector3(-1.0, 0.0, -4.0), 1.2); // Czerwona, bliżej
+    Sphere sphere2(Vector3(1.5, -0.5, -6.0), 0.8); // Zielona, głębiej
+    Plane plane(Vector3(0, -1.2, 0), Vector3(0, 1, 0)); // Podłoże
 
-    PerspectiveCamera camera(
-        Vector3(0, 0, 0),
-        Vector3(0, 0, -1),
-        Vector3(0, 1, 0),
-        90.0
-    );
+    PerspectiveCamera perspCam(Vector3(0, 0, 0), Vector3(0, 0, -1), Vector3(0, 1, 0), 90.0);
+    OrthographicCamera orthoCam(Vector3(0, 0, 0), Vector3(0, 0, -1), Vector3(0, 1, 0), 4.0);
 
-    cout << "Rozpoczynam renderowanie perspektywiczne z Antialiasingiem Adaptacyjnym..." << endl;
+    cout << "Trwa renderowanie obrazow (moze to chwile potrwac)..." << endl;
 
-    int maxDepth = 2;
+    renderScene(orthoCam, width, height, "orthographic_1spp.ppm", 0, sphere1, sphere2, plane);
 
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            
-            Color pixelColor = adaptiveSample(x + 0.5, y + 0.5, 1.0, 0, maxDepth, camera, width, height, sphere, plane);
+    renderScene(perspCam, width, height, "perspective_1spp.ppm", 0, sphere1, sphere2, plane);
 
-            img.setPixel(x, y, pixelColor);
-        }
-    }
+    renderScene(perspCam, width, height, "perspective_2x2_aa.ppm", 1, sphere1, sphere2, plane);
 
-    img.savePPM("perspective_adaptive_aa.ppm");
-    cout << "Renderowanie zakonczone. Zapisano perspective_adaptive_aa.ppm" << endl;
+    renderScene(perspCam, width, height, "perspective_4x4_aa.ppm", 2, sphere1, sphere2, plane);
 
-    // orthographic_1spp.ppm
+    cout << "Renderowanie zakonczone! Wygenerowano wszystkie pliki." << endl;
+
     return 0;
 }
