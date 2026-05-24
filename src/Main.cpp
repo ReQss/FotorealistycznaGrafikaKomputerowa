@@ -141,7 +141,6 @@ int main()
 
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-            // Generujemy kolory w zależności od współrzędnych
             double r = double(x) / (width - 1);
             double g = double(height - 1 - y) / (height - 1);
             double b = 0.25;
