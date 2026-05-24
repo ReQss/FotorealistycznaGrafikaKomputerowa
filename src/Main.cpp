@@ -2,8 +2,54 @@
 #include "../include/Vector3.h"
 #include "../include/Geometry.h"
 #include "../include/Image.h"
+#include "../include/Camera.h"
 
 using namespace std;
+
+Color trace(const Ray& ray, const Sphere& sphere, const Plane& plane) {
+    auto hitSphere = sphere.intersects(ray);
+    auto hitPlane = plane.intersects(ray);
+
+    double minDistance = 1e9; 
+    
+    Color finalColor(0.2, 0.2, 0.3); 
+
+    Vector3 lightDir = Vector3(1, 1, -1).normalize();
+
+    if (hitSphere) {
+        double dist = (*hitSphere - ray.origin).length();
+        
+        if (dist < minDistance) {
+            minDistance = dist;
+            
+            Vector3 normal = (*hitSphere - sphere.center).normalize();
+            
+            double intensity = std::max(0.0, normal * lightDir);
+            
+            Color sphereColor(0.8, 0.2, 0.2); 
+            
+            finalColor = sphereColor * intensity;
+        }
+    }
+
+    if (hitPlane) {
+        double dist = (*hitPlane - ray.origin).length();
+        
+        if (dist < minDistance) {
+            minDistance = dist;
+            
+            Vector3 normal = plane.normal;
+            
+            double intensity = std::max(0.0, normal * lightDir);
+            
+            Color planeColor(0.5, 0.5, 0.5); 
+            
+            finalColor = planeColor * intensity;
+        }
+    }
+
+    return finalColor;
+}
 
 int main()
 {
@@ -135,20 +181,36 @@ int main()
     // LAB 2
     // -------------------------------
 
-    int width = 256;
-    int height = 256;
+    int width = 800;
+    int height = 600;
     Image img(width, height);
+
+    Sphere sphere(Vector3(0, 0, -5), 1.5);
+    Plane plane(Vector3(0, -1.5, 0), Vector3(0, 1, 0));
+
+    PerspectiveCamera camera(
+        Vector3(0, 0, 0),
+        Vector3(0, 0, -1),
+        Vector3(0, 1, 0),
+        90.0
+    );
+
+    cout << "Rozpoczynam renderowanie perspektywiczne..." << endl;
 
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-            double r = double(x) / (width - 1);
-            double g = double(height - 1 - y) / (height - 1);
-            double b = 0.25;
+            
+            Ray ray = camera.generateRay(x, y, width, height);
 
-            img.setPixel(x, y, Color(r, g, b));
+            Color pixelColor = trace(ray, sphere, plane);
+
+            img.setPixel(x, y, pixelColor);
         }
     }
 
-    img.savePPM("test_render.ppm");
+    img.savePPM("perspective_1spp.ppm");
+    cout << "Renderowanie zakonczone. Zapisano perspective_1spp.ppm" << endl;
+
+    // orthographic_1spp.ppm
     return 0;
 }
