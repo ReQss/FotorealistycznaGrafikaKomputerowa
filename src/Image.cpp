@@ -3,19 +3,24 @@
 #include <iostream>
 #include <algorithm>
 
-Image::Image(int w, int h) : width(w), height(h) {
+Image::Image(int w, int h) : width(w), height(h) 
+{
     pixels.resize(width * height);
 }
 
-void Image::setPixel(int x, int y, const Color& color) {
-    if (x >= 0 && x < width && y >= 0 && y < height) {
+void Image::setPixel(int x, int y, const Color& color) 
+{
+    if (x >= 0 && x < width && y >= 0 && y < height) 
+    {
         pixels[y * width + x] = color;
     }
 }
 
-void Image::savePPM(const std::string& filename) const {
+void Image::savePPM(const std::string& filename) const 
+{
     std::ofstream out(filename);
-    if (!out) {
+    if (!out) 
+    {
         std::cerr << "Nie mozna utworzyc pliku: " << filename << std::endl;
         return;
     }

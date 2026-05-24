@@ -1,7 +1,8 @@
 #pragma once
 #include <algorithm>
 
-class Color {
+class Color 
+{
 public:
     double r, g, b;
 

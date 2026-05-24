@@ -3,7 +3,8 @@
 #include <vector>
 #include <string>
 
-class Image {
+class Image 
+{
 private:
     int width;
     int height;
