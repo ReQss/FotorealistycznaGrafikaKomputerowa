@@ -71,24 +71,30 @@ Color trace(const Ray& ray, const Sphere& s1, const Sphere& s2) {
             finalColor = ambient; 
         }
     }
-    else {
-        double x = ray.origin.getX();
-        double y = ray.origin.getY();
+else {
+        double t_bg = (-5.0 - ray.origin.getZ()) / ray.direction.getZ();
+        
+        if (t_bg > 0.0) {
+            Vector3 bgHit = ray.origin + ray.direction * t_bg;
+            
+            double x = bgHit.getX();
+            double y = bgHit.getY();
 
-        int col = std::floor(x + 3.0);
-        int row = std::floor(3.0 - y); 
+            int col = std::floor(x + 3.0);
+            int row = std::floor(3.0 - y); 
 
-        col = std::max(0, std::min(5, col));
-        row = std::max(0, std::min(5, row));
+            col = std::max(0, std::min(5, col));
+            row = std::max(0, std::min(5, row));
 
-        double t = row / 5.0; 
+            double t = row / 5.0; 
 
-        if (col == 5) finalColor = Color(t, 0, 0);         
-        else if (col == 4) finalColor = Color(0, t, 0);    
-        else if (col == 3) finalColor = Color(0, 0, t);    
-        else if (col == 2) finalColor = Color(1.0, 0, t);  
-        else if (col == 1) finalColor = Color(0, 1.0, t);  
-        else if (col == 0) finalColor = Color(1.0, 1.0, t);
+            if (col == 5) finalColor = Color(t, 0, 0);         
+            else if (col == 4) finalColor = Color(0, t, 0);    
+            else if (col == 3) finalColor = Color(0, 0, t);    
+            else if (col == 2) finalColor = Color(1.0, 0, t);  
+            else if (col == 1) finalColor = Color(0, 1.0, t);  
+            else if (col == 0) finalColor = Color(1.0, 1.0, t);
+        }
     }
 
     finalColor.r = std::max(0.0, std::min(1.0, finalColor.r));
@@ -284,15 +290,24 @@ int main()
     int width = 600;
     int height = 600;
 
-    Sphere sphereBlue(Vector3(0.0, 0.0, -2.0), 1.5);   
-    Sphere sphereRed(Vector3(-1.5, 0.0, -3.0), 1.0);    
+    Sphere sphereBlue(Vector3(0.0, 0.0, -4.0), 1.2);   
+    Sphere sphereRed(Vector3(-1., 0, -5.5), 0.8);    
 
-    OrthographicCamera orthoCam(Vector3(0, 0, 0), Vector3(0, 0, -1), Vector3(0, 1, 0), 6.0);
-    PerspectiveCamera perspCam(Vector3(0, 0, 0), Vector3(0, 0, -1), Vector3(0, 1, 0), 90.0);
+    OrthographicCamera orthoCam(Vector3(0, 0, 0), Vector3(0, 0, -1), Vector3(0, 1, 0), 5.0);
+    
+    PerspectiveCamera perspCam(Vector3(0, 0.5, 0), Vector3(0, -0.1, -1), Vector3(0, 1, 0), 90.0);
+
+    cout << "Rozpoczynam renderowanie Zadania koncowego..." << endl;
 
     renderScene(orthoCam, width, height, "orthographic_1spp.ppm", 0, sphereBlue, sphereRed);
+    
     renderScene(perspCam, width, height, "perspective_1spp.ppm", 0, sphereBlue, sphereRed);
+
+    renderScene(perspCam, width, height, "perspective_2x2_aa.ppm", 1, sphereBlue, sphereRed);
+    
     renderScene(perspCam, width, height, "perspective_4x4_aa.ppm", 2, sphereBlue, sphereRed);
+
+    cout << "Renderowanie zakonczone! Zdjecia powinny byc teraz idealne." << endl;
 
     return 0;
 }
