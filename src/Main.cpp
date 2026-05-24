@@ -48,6 +48,7 @@ Color trace(const Ray& ray, const Sphere& s1, const Sphere& s2) {
     }
 
     if (hitAnything) {
+        /*
         Vector3 lightDir = Vector3(1, 1.5, 1).normalize();
         
         Color ambient = baseColor * 0.2;
@@ -70,6 +71,8 @@ Color trace(const Ray& ray, const Sphere& s1, const Sphere& s2) {
         } else {
             finalColor = ambient; 
         }
+        */
+        finalColor = baseColor;
     }
 else {
         double t_bg = (-5.0 - ray.origin.getZ()) / ray.direction.getZ();
@@ -291,7 +294,7 @@ int main()
     int height = 600;
 
     Sphere sphereBlue(Vector3(0.0, 0.0, -4.0), 1.2);   
-    Sphere sphereRed(Vector3(-1., 0, -5.5), 0.8);    
+    Sphere sphereRed(Vector3(-1.5, 0, -5.5), 0.8);    
 
     OrthographicCamera orthoCam(Vector3(0, 0, 0), Vector3(0, 0, -1), Vector3(0, 1, 0), 5.0);
     
