@@ -6,6 +6,10 @@
 
 using namespace std;
 
+double colorDifference(const Color& c1, const Color& c2) {
+    return std::max({std::abs(c1.r - c2.r), std::abs(c1.g - c2.g), std::abs(c1.b - c2.b)});
+}
+
 Color trace(const Ray& ray, const Sphere& sphere, const Plane& plane) {
     auto hitSphere = sphere.intersects(ray);
     auto hitPlane = plane.intersects(ray);
@@ -49,6 +53,44 @@ Color trace(const Ray& ray, const Sphere& sphere, const Plane& plane) {
     }
 
     return finalColor;
+}
+
+Color adaptiveSample(double x, double y, double size, int depth, int maxDepth, const Camera& camera, int width, int height, const Sphere& sphere, const Plane& plane) {
+    Ray centerRay = camera.generateRay(x, y, width, height);
+    Color centerColor = trace(centerRay, sphere, plane);
+
+    if (depth >= maxDepth) {
+        return centerColor;
+    }
+
+    double quarterSize = size / 4.0;
+    Ray r1 = camera.generateRay(x - quarterSize, y - quarterSize, width, height);
+    Ray r2 = camera.generateRay(x + quarterSize, y - quarterSize, width, height);
+    Ray r3 = camera.generateRay(x - quarterSize, y + quarterSize, width, height);
+    Ray r4 = camera.generateRay(x + quarterSize, y + quarterSize, width, height);
+
+    Color c1 = trace(r1, sphere, plane);
+    Color c2 = trace(r2, sphere, plane);
+    Color c3 = trace(r3, sphere, plane);
+    Color c4 = trace(r4, sphere, plane);
+
+    double threshold = 0.1;
+    
+    bool needsSubdivision = 
+        colorDifference(centerColor, c1) > threshold ||
+        colorDifference(centerColor, c2) > threshold ||
+        colorDifference(centerColor, c3) > threshold ||
+        colorDifference(centerColor, c4) > threshold;
+
+    if (needsSubdivision) {
+        double halfSize = size / 2.0;
+        c1 = adaptiveSample(x - quarterSize, y - quarterSize, halfSize, depth + 1, maxDepth, camera, width, height, sphere, plane);
+        c2 = adaptiveSample(x + quarterSize, y - quarterSize, halfSize, depth + 1, maxDepth, camera, width, height, sphere, plane);
+        c3 = adaptiveSample(x - quarterSize, y + quarterSize, halfSize, depth + 1, maxDepth, camera, width, height, sphere, plane);
+        c4 = adaptiveSample(x + quarterSize, y + quarterSize, halfSize, depth + 1, maxDepth, camera, width, height, sphere, plane);
+    }
+
+    return (c1 + c2 + c3 + c4) * 0.25;
 }
 
 int main()
@@ -195,21 +237,21 @@ int main()
         90.0
     );
 
-    cout << "Rozpoczynam renderowanie perspektywiczne..." << endl;
+    cout << "Rozpoczynam renderowanie perspektywiczne z Antialiasingiem Adaptacyjnym..." << endl;
+
+    int maxDepth = 2;
 
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             
-            Ray ray = camera.generateRay(x, y, width, height);
-
-            Color pixelColor = trace(ray, sphere, plane);
+            Color pixelColor = adaptiveSample(x + 0.5, y + 0.5, 1.0, 0, maxDepth, camera, width, height, sphere, plane);
 
             img.setPixel(x, y, pixelColor);
         }
     }
 
-    img.savePPM("perspective_1spp.ppm");
-    cout << "Renderowanie zakonczone. Zapisano perspective_1spp.ppm" << endl;
+    img.savePPM("perspective_adaptive_aa.ppm");
+    cout << "Renderowanie zakonczone. Zapisano perspective_adaptive_aa.ppm" << endl;
 
     // orthographic_1spp.ppm
     return 0;
