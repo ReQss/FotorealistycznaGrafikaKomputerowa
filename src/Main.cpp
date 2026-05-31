@@ -12,9 +12,6 @@
 
 using namespace std;
 
-// -------------------------------------------------------
-// Najblizsze trafienie wsrod sfer i plaszczyzn
-// -------------------------------------------------------
 optional<HitRecord> closestHit(const Ray& ray,
                                const vector<Sphere>& spheres,
                                const vector<Plane>&  planes)
@@ -182,8 +179,8 @@ int main()
     Material matBlue(
         Color(0.0, 0.0, 0.1),
         Color(0.1, 0.3, 0.9),
-        Color(1.0, 1.0, 1.0),
-        64.0
+        Color(0.0, 0.0, 0.0),
+        200
     );
     Material matRed(
         Color(0.1, 0.0, 0.0),
@@ -201,7 +198,7 @@ int main()
 
     vector<Sphere> spheres = {
         Sphere(Vector3( 0.0, 0.0, -4.0), 1.2, matBlue),
-        Sphere(Vector3(-1.5, 0.0, -5.5), 0.8, matRed)
+        Sphere(Vector3(5, 0.0, -5.5), 0.8, matRed)
     };
 
     vector<Plane> planes = {
@@ -209,7 +206,7 @@ int main()
     };
 
     PointLight light(
-        Vector3(4.0, 6.0, -2.0),
+        Vector3(0.0, 1.0, -2.0),
         Color(1.0, 1.0, 1.0),
         1.0, 0.04, 0.002
     );
