@@ -1,6 +1,6 @@
 #pragma once
-#include "Vector3.h"
-#include "Material.h"
+#include "../include/Vector3.h"
+#include "../include/Material.h"
 #include <optional>
 
 class Ray

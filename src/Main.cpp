@@ -3,12 +3,12 @@
 #include <cmath>
 #include <algorithm>
 #include <memory>
-#include "Vector3.h"
-#include "Geometry.h"
-#include "Image.h"
-#include "Camera.h"
-#include "Material.h"
-#include "Light.h"
+#include "../include/Vector3.h"
+#include "../include/Geometry.h"
+#include "../include/Image.h"
+#include "../include/Camera.h"
+#include "../include/Material.h"
+#include "../include/Light.h"
 
 using namespace std;
 
@@ -51,23 +51,78 @@ Color phong(const HitRecord& rec,
     return ambient + diffuse + specular;
 }
 
-Color trace(const Ray& ray,
-            const vector<Sphere>& spheres,
-            const vector<Plane>&  planes,
-            const PointLight& light)
+Vector3 reflect(const Vector3& I, const Vector3& N) 
 {
-    auto hit = closestHit(ray, spheres, planes);
+    return I - N * (2.0 * (N * I));
+}
 
-    if (hit)
-    {
-        Color c = phong(*hit, ray, light, spheres, planes);
-        c.r = clamp(c.r, 0.0, 1.0);
-        c.g = clamp(c.g, 0.0, 1.0);
-        c.b = clamp(c.b, 0.0, 1.0);
-        return c;
+std::optional<Vector3> refract(const Vector3& I, const Vector3& N, double ior) 
+{
+    double cosi = I * N;
+    double etai = 1.0; 
+    double etat = ior;
+    Vector3 n = N;
+    
+    if (cosi < 0) { 
+        cosi = -cosi; 
+    } else { 
+        std::swap(etai, etat); 
+        n = N * -1.0; 
+    }
+    
+    double eta = etai / etat;
+    double k = 1.0 - eta * eta * (1.0 - cosi * cosi);
+    
+    if (k < 0.0) {
+        return std::nullopt;
+    } else {
+        return I * eta + n * (eta * cosi - sqrt(k));
+    }
+}
+
+Color trace(const Ray& ray, 
+            const vector<Sphere>& spheres, 
+            const vector<Plane>& planes, 
+            const PointLight& light,
+            int depth) 
+{
+    if (depth <= 0) {
+        return Color(0, 0, 0);
     }
 
-    Color finalColor(0.05, 0.05, 0.1);
+    auto hit = closestHit(ray, spheres, planes);
+    if (!hit) {
+        return Color(0, 0, 0);
+    }
+
+    HitRecord rec = *hit;
+    Color finalColor(0, 0, 0);
+
+    if (rec.material.isMirror) 
+    {
+        Vector3 R = reflect(ray.direction, rec.normal).normalize();
+        Ray reflectRay(rec.point + rec.normal * 1e-4, R);
+        finalColor = trace(reflectRay, spheres, planes, light, depth - 1);
+    } 
+    else if (rec.material.isRefractive) 
+    {
+        auto refractedDir = refract(ray.direction, rec.normal, rec.material.ior);
+        if (refractedDir) {
+            Vector3 offsetNormal = (ray.direction * rec.normal < 0) ? rec.normal : rec.normal * -1.0;
+            Ray refractRay(rec.point - offsetNormal * 1e-4, refractedDir->normalize());
+            
+            finalColor = trace(refractRay, spheres, planes, light, depth - 1);
+        } else {
+            Vector3 R = reflect(ray.direction, rec.normal).normalize();
+            Ray reflectRay(rec.point + rec.normal * 1e-4, R);
+            finalColor = trace(reflectRay, spheres, planes, light, depth - 1);
+        }
+    } 
+    else 
+    {
+        finalColor = phong(rec, ray, light, spheres, planes);
+    }
+
     return finalColor;
 }
 
@@ -82,15 +137,15 @@ Color adaptiveSample(double x, double y, double size, int depth, int maxDepth,
                      const PointLight& light)
 {
     Ray   centerRay   = camera.generateRay(x, y, width, height);
-    Color centerColor = trace(centerRay, spheres, planes, light);
+    Color centerColor = trace(centerRay, spheres, planes, light, 4);
 
     if (depth >= maxDepth) return centerColor;
 
     double q = size / 4.0;
-    Color c1 = trace(camera.generateRay(x-q, y-q, width, height), spheres, planes, light);
-    Color c2 = trace(camera.generateRay(x+q, y-q, width, height), spheres, planes, light);
-    Color c3 = trace(camera.generateRay(x-q, y+q, width, height), spheres, planes, light);
-    Color c4 = trace(camera.generateRay(x+q, y+q, width, height), spheres, planes, light);
+    Color c1 = trace(camera.generateRay(x-q, y-q, width, height), spheres, planes, light, 4);
+    Color c2 = trace(camera.generateRay(x+q, y-q, width, height), spheres, planes, light, 4);
+    Color c3 = trace(camera.generateRay(x-q, y+q, width, height), spheres, planes, light, 4);
+    Color c4 = trace(camera.generateRay(x+q, y+q, width, height), spheres, planes, light, 4);
 
     double threshold = 0.05;
     bool needsSub = colorDifference(centerColor, c1) > threshold ||
@@ -123,7 +178,7 @@ void renderScene(const Camera& camera, int width, int height,
             if (maxDepth == 0)
             {
                 Ray ray = camera.generateRay(x+0.5, y+0.5, width, height);
-                pixelColor = trace(ray, spheres, planes, light);
+                pixelColor = trace(ray, spheres, planes, light, 4); 
             }
             else
             {
@@ -172,51 +227,41 @@ int main()
     cout << "Przypadek 2: " << (isLineIntersectingTriangle(Vector3(2,-1,0), Vector3(2,2,0),  A,B,C)?"True":"False") << endl;
     cout << "Przypadek 3: " << (isLineIntersectingTriangle(Vector3(0,0,-1), Vector3(0,0,1),  A,B,C)?"True":"False") << endl;
 
-    // LAB 4 – Phong + cien
+    // LAB 5 - Rekursywny ray tracing z adaptacyjnym próbkowaniem
    
     int width = 600, height = 600;
 
-    Material matBlue(
-        Color(0.0, 0.0, 0.1),
-        Color(0.1, 0.3, 0.9),
-        Color(0.0, 0.0, 0.0),
-        200
-    );
-    Material matRed(
-        Color(0.1, 0.0, 0.0),
-        Color(0.9, 0.2, 0.2),
-        Color(1.0, 1.0, 1.0),
-        32.0
-    );
+    Material matWhite(Color(0.1, 0.1, 0.1), Color(0.8, 0.8, 0.8), Color(0.0, 0.0, 0.0), 1.0);
+    Material matRed(  Color(0.1, 0.0, 0.0), Color(0.8, 0.1, 0.1), Color(0.0, 0.0, 0.0), 1.0);
+    Material matGreen(Color(0.0, 0.1, 0.0), Color(0.1, 0.8, 0.1), Color(0.0, 0.0, 0.0), 1.0);
 
-    Material matFloor(
-        Color(0.05, 0.05, 0.05),
-        Color(0.6,  0.6,  0.6),
-        Color(0.1,  0.1,  0.1),
-        8.0
-    );
-
-    vector<Sphere> spheres = {
-        Sphere(Vector3( 0.0, 0.0, -4.0), 1.2, matBlue),
-        Sphere(Vector3(5, 0.0, -5.5), 0.8, matRed)
-    };
+    Material matMirror(Color(0,0,0), Color(0,0,0), Color(0,0,0), 0, true, false, 1.0);
+    Material matGlass(Color(0,0,0), Color(0,0,0), Color(0,0,0), 0, false, true, 1.52);
 
     vector<Plane> planes = {
-        Plane(Vector3(0, -1.2, 0), Vector3(0, 1, 0), matFloor)
+        Plane(Vector3( 0, -3,  0), Vector3( 0,  1,  0), matWhite),
+        Plane(Vector3( 0,  3,  0), Vector3( 0, -1,  0), matWhite),
+        Plane(Vector3( 0,  0, -6), Vector3( 0,  0,  1), matWhite),
+        Plane(Vector3(-3,  0,  0), Vector3( 1,  0,  0), matRed),
+        Plane(Vector3( 3,  0,  0), Vector3(-1,  0,  0), matGreen)
+    };
+
+    vector<Sphere> spheres = {
+        Sphere(Vector3(-1.3, -1.5, -4.5), 1.5, matMirror),
+        Sphere(Vector3( 1.3, -1.5, -2.5), 1.5, matGlass)
     };
 
     PointLight light(
-        Vector3(0.0, 1.0, -2.0),
-        Color(1.0, 1.0, 1.0),
-        1.0, 0.04, 0.002
+        Vector3(0.0, 2.9, -3.0),
+        Color(1.0, 1.0, 1.0), 
+        0.5, 0.08, 0.005
     );
 
-    PerspectiveCamera perspCam(Vector3(0, 1.5, 2.0), Vector3(0, -0.3, -1), Vector3(0, 1, 0), 70.0);
-    OrthographicCamera orthoCam(Vector3(0, 0, 0), Vector3(0, 0, -1), Vector3(0, 1, 0), 5.0);
+    PerspectiveCamera perspCam(Vector3(0.0, 0.0, 2.9), Vector3(0.0, 0.0, -1.0), Vector3(0.0, 1.0, 0.0), 80.0);
 
-    renderScene(perspCam, width, height, "shadow_perspective.ppm",  0, spheres, planes, light);
-    renderScene(perspCam, width, height, "shadow_perspective_aa.ppm", 2, spheres, planes, light);
-    renderScene(orthoCam, width, height, "shadow_ortho.ppm",         0, spheres, planes, light);
+    int maxDepth = 4; 
+    
+    renderScene(perspCam, width, height, "cornell_box.ppm", 2, spheres, planes, light);
 
     return 0;
 }
