@@ -5,6 +5,10 @@
 #include "Geometry.h"
 #include <vector>
 
+enum class SpecularModel {
+    Phong,
+    BlinnPhong
+};
 
 class Light
 {
@@ -36,6 +40,8 @@ public:
     double constAtten;
     double linearAtten;
     double quadAtten;
+
+    SpecularModel currentModel = SpecularModel::Phong;
 
     PointLight(const Vector3& position, const Color& intensity,
                double constAtten  = 1.0,
@@ -80,15 +86,26 @@ public:
     Color getSpecular(const Vector3& cameraPosition,
                       const HitRecord& iInfo) const override
     {
-        Vector3 L    = directionFrom(iInfo.point);
-        double  dist = distanceFrom(iInfo.point);
-        double  atten = attenuationAt(dist);
+        Vector3 L = directionFrom(iInfo.point);
+        double dist = distanceFrom(iInfo.point);
+        double atten = attenuationAt(dist);
 
         Vector3 V = (cameraPosition - iInfo.point).normalize();
 
-        Vector3 R = (iInfo.normal * (2.0 * (iInfo.normal * L)) - L).normalize();
+        double spec = 0.0;
 
-        double spec = std::pow(std::max(0.0, V * R), iInfo.material.shininess);
+        if (currentModel == SpecularModel::Phong) 
+        {
+            Vector3 R = (iInfo.normal * (2.0 * (iInfo.normal * L)) - L).normalize();
+            
+            spec = std::pow(std::max(0.0, V * R), iInfo.material.shininess);
+        } 
+        else if (currentModel == SpecularModel::BlinnPhong) 
+        {
+            Vector3 H = (L + V).normalize();
+            
+            spec = std::pow(std::max(0.0, iInfo.normal * H), iInfo.material.shininess);
+        }
 
         return iInfo.material.Ks * intensity * (spec * atten);
     }

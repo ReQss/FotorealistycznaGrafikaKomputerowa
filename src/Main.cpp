@@ -249,11 +249,7 @@ int main()
     Material matRed  (Color(0.1, 0.0, 0.0), Color(0.7, 0.1, 0.1), Color(0.0, 0.0, 0.0), 1.0);
     Material matGreen(Color(0.0, 0.1, 0.0), Color(0.1, 0.7, 0.1), Color(0.0, 0.0, 0.0), 1.0);
 
-    Material matMirror(Color(0,0,0), Color(0,0,0), Color(0,0,0),
-                       0, /*isMirror=*/true, /*isRefractive=*/false, 1.0);
-
-    Material matGlass(Color(0,0,0), Color(0,0,0), Color(0,0,0),
-                      0, /*isMirror=*/false, /*isRefractive=*/true, 1.52);
+    Material matShiny(Color(0.1, 0.1, 0.1), Color(0.2, 0.2, 0.8), Color(1.0, 1.0, 1.0), 32.0);
 
     vector<Plane> planes = {
         Plane(Vector3( 0, -3,  0), Vector3( 0,  1,  0), matWhite),
@@ -263,9 +259,9 @@ int main()
         Plane(Vector3( 3,  0,  0), Vector3(-1,  0,  0), matGreen)
     };
 
-    vector<Sphere> spheres = {
-        Sphere(Vector3(-1.5, -1.5, -4.0), 1.0, matMirror),
-        Sphere(Vector3( 1.5, -1.5, -4.0), 1.0, matGlass)
+    vector<Sphere> spheres = { // - matMirror, - matGlass
+        Sphere(Vector3(-1.5, -1.5, -4.0), 1.0, matShiny),
+        Sphere(Vector3( 1.5, -1.5, -4.0), 1.0, matShiny)
     };
 
     PointLight light(
@@ -281,10 +277,13 @@ int main()
         80.0
     );
 
-    cout << "\nRenderowanie Cornell Box..." << endl;
-    renderScene(camera, WIDTH, HEIGHT, "cornell_box.ppm",
+    light.currentModel = SpecularModel::Phong; 
+    renderScene(camera, WIDTH, HEIGHT, "phong.ppm",
                 AA_DEPTH, TRACE_DEPTH, spheres, planes, light);
-    cout << "Gotowe!" << endl;
+
+    light.currentModel = SpecularModel::BlinnPhong; 
+    renderScene(camera, WIDTH, HEIGHT, "blinn_phong.ppm",
+                AA_DEPTH, TRACE_DEPTH, spheres, planes, light);
 
     return 0;
 }
