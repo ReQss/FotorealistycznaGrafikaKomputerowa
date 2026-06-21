@@ -96,12 +96,14 @@ Color trace(const Ray& ray,
 
     const HitRecord& rec = *hit;
 
-    if (rec.material.isMirror)
-    {
-        Vector3 R = reflect(ray.direction, rec.normal).normalize();
-        Ray reflectRay(rec.point + rec.normal * 1e-4, R);
-        return trace(reflectRay, spheres, planes, light, depth - 1);
-    }
+if (rec.material.isMirror)
+{
+    Vector3 R = reflect(ray.direction, rec.normal).normalize();
+    Ray reflectRay(rec.point + rec.normal * 1e-4, R);
+    Color reflected = trace(reflectRay, spheres, planes, light, depth - 1);
+    Color specular  = light.getSpecular(ray.origin, rec);  // dodaj spekulację
+    return reflected + specular;
+}
 
     if (rec.material.isRefractive)
     {
@@ -264,11 +266,15 @@ Material mat32 (Color(0.05,0.05,0.05), Color(0.1,0.1,0.3), Color(1,1,1), 32.0);
 Material mat128(Color(0.05,0.05,0.05), Color(0.1,0.1,0.3), Color(1,1,1), 128.0);
 Material mat512(Color(0.05,0.05,0.05), Color(0.1,0.1,0.3), Color(1,1,1), 512.0);
 
+Material matMirror(Color(0.0,0.0,0.0), Color(0.0,0.0,0.0), Color(1.0,1.0,1.0), 1.0,
+                   true, false, 0.1);
+
 vector<Sphere> spheres = {
     Sphere(Vector3(-3.0, -1.5, -5.0), 1.0, mat8),
     Sphere(Vector3(-1.0, -1.5, -5.0), 1.0, mat32),
     Sphere(Vector3( 1.0, -1.5, -5.0), 1.0, mat128),
-    Sphere(Vector3( 3.0, -1.5, -5.0), 1.0, mat512)
+    Sphere(Vector3( 3.0, -1.5, -5.0), 1.0, mat512),
+    Sphere(Vector3( 0.0,  0.5, -4.0), 1.0, matMirror)  // lustrzana, unosi się wyżej
 };
     PointLight light(
         Vector3(0.0, 2.9, -3.0),
