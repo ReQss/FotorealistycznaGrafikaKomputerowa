@@ -249,7 +249,7 @@ int main()
     Material matRed  (Color(0.1, 0.0, 0.0), Color(0.7, 0.1, 0.1), Color(0.0, 0.0, 0.0), 1.0);
     Material matGreen(Color(0.0, 0.1, 0.0), Color(0.1, 0.7, 0.1), Color(0.0, 0.0, 0.0), 1.0);
 
-    Material matShiny(Color(0.1, 0.1, 0.1), Color(0.2, 0.2, 0.8), Color(1.0, 1.0, 1.0), 32.0);
+   Material matShiny(Color(0.05, 0.05, 0.05), Color(0.1, 0.1, 0.3), Color(1.0, 1.0, 1.0), 200.0);
 
     vector<Plane> planes = {
         Plane(Vector3( 0, -3,  0), Vector3( 0,  1,  0), matWhite),
@@ -259,11 +259,17 @@ int main()
         Plane(Vector3( 3,  0,  0), Vector3(-1,  0,  0), matGreen)
     };
 
-    vector<Sphere> spheres = { // - matMirror, - matGlass
-        Sphere(Vector3(-1.5, -1.5, -4.0), 1.0, matShiny),
-        Sphere(Vector3( 1.5, -1.5, -4.0), 1.0, matShiny)
-    };
+   Material mat8  (Color(0.05,0.05,0.05), Color(0.1,0.1,0.3), Color(1,1,1), 8.0);
+Material mat32 (Color(0.05,0.05,0.05), Color(0.1,0.1,0.3), Color(1,1,1), 32.0);
+Material mat128(Color(0.05,0.05,0.05), Color(0.1,0.1,0.3), Color(1,1,1), 128.0);
+Material mat512(Color(0.05,0.05,0.05), Color(0.1,0.1,0.3), Color(1,1,1), 512.0);
 
+vector<Sphere> spheres = {
+    Sphere(Vector3(-3.0, -1.5, -5.0), 1.0, mat8),
+    Sphere(Vector3(-1.0, -1.5, -5.0), 1.0, mat32),
+    Sphere(Vector3( 1.0, -1.5, -5.0), 1.0, mat128),
+    Sphere(Vector3( 3.0, -1.5, -5.0), 1.0, mat512)
+};
     PointLight light(
         Vector3(0.0, 2.9, -3.0),
         Color(1.0, 1.0, 1.0),
@@ -271,11 +277,11 @@ int main()
     );
 
     PerspectiveCamera camera(
-        Vector3(0.0, 0.0, 2.9),
-        Vector3(0.0, 0.0, -1.0),
-        Vector3(0.0, 1.0,  0.0),
-        80.0
-    );
+    Vector3(0.0, -1.0, 2.0),  
+    Vector3(0.0, -0.1, -1.0),  
+    Vector3(0.0, 1.0, 0.0),
+    80.0
+);
 
     light.currentModel = SpecularModel::Phong; 
     renderScene(camera, WIDTH, HEIGHT, "phong.ppm",
